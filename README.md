@@ -167,18 +167,24 @@ separated the buildings more cleanly than I expected.
 
 ## How I Used AI
 
-<!-- Two specific moments. For each: what you asked for, what came back, and
-     what you changed about it.
+**1.** I asked Claude for help drafting my five test questions. It couldn't
+write anything useful at first because it had no view of my documents, so I ran
+`python app.py chunks -n 8` and gave it eight real chunks to work from. It
+drafted five questions with `expects` phrases, all tied to specific facts —
+a price, a time, a number, a rule. The thing I had to catch myself was whether
+to swap in my own college's buildings instead. The answer was no: Halden Hall
+and Fenwick Court only exist inside campus_life, so real buildings would have
+left the system with nothing to retrieve and every question would have failed.
 
-     "I asked Claude to write the chunking function from my notes. It ignored
-     the overlap, so I added that myself" is the level of detail we're after.
-     "I used AI to help me code" is not.
-
-     Milestone 5. -->
-
-**1.**
-
-**2.**
+**2.** I decided the chunking strategy myself — split on blank lines, merge
+short paragraphs — after seeing that the starter's 800-character window never
+split anything in a corpus averaging 317 characters per document. I had Claude
+Code implement it. It came back working, and it also flagged something I hadn't
+asked about: the 100-character floor merges a short chunk into the previous
+one, but a document whose *first* paragraph is under 100 characters has no
+previous chunk, so it gets emitted short anyway. That doesn't happen on
+campus_life — my shortest chunk is 101 — but it would on a corpus that opens
+with short headers. I left it, knowing the limitation.
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never
