@@ -21,11 +21,14 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
-
-     Milestone 5. -->
+The corpus is campus_life, 88 short posts written by students about dorms,
+dining halls, courses and the administrative rules nobody explains properly.
+The system answers specific factual questions about them — laundry prices,
+course workloads, dining hall hours, add/drop deadlines — by retrieving the
+chunks closest in meaning to the question and answering from those alone,
+naming the source file each fact came from. A relevance gate checks the
+distance of the best chunk before the model runs, so a question the documents
+do not cover is refused rather than guessed at.
 
 ## Chunking Strategy
 
@@ -116,27 +119,51 @@ The bad: no air conditioning, which matters for the first three weeks of Septemb
 <!-- One complete question and answer, pasted as text, with the source line
      visible. Milestone 4. -->
 
-**Question:**
+**Question:** What time does Halden Hall close?
 
 **Answer:**
 
 ```
+  (best distance 0.323, cutoff 0.55)
+
+Halden Hall closes at 7:00pm. 
+
+Sources: `dining_halden_hall.txt` and `dining_halden_hall_followup.txt`
+
+Sources retrieved: dining_halden_hall.txt, dining_halden_hall_followup.txt, dining_north_kitchen_followup.txt, dining_pellew_dining_hall.txt, dining_pellew_dining_hall_followup.txt
 ```
 
 **My relevance cutoff:**
 
-<!-- The number you set in config.py, and how you got there.
+0.55, measured rather than inherited. I ran my five in-corpus questions and the
+five OUT_OF_SCOPE questions through `app.py retrieve` and recorded the best
+distance for each. The two groups did not overlap anywhere: every in-corpus
+question landed between 0.149 and 0.323, and every out-of-corpus question
+landed between 0.825 and 0.934. That is a gap of half a distance unit with
+nothing in it, so the cutoff had a wide window to sit in. I put it at 0.55,
+near the middle of the gap, which leaves more room above my worst real question
+(0.323) than below my closest out-of-corpus one (0.825). The starter's 0.6 also
+falls in the gap and would have worked, but 0.55 is the number my own
+measurements support.
 
-     You ran five questions your corpus covers and the five in OUT_OF_SCOPE
-     that it clearly doesn't, and wrote down the best distance for each. What
-     did those two groups look like? Where was the gap? Put the actual numbers
-     here — the table below wants all ten rows.
-
-     Milestone 4. -->
+One thing I got wrong in advance: I expected the Fenwick Court laundry question
+to be the hard one, because the corpus has near-identical laundry posts for
+seven different buildings and they differ only in the prices. It scored the
+best of all five at 0.149, and the correct file came back first. The embedding
+separated the buildings more cleanly than I expected.
 
 | Question | In corpus? | Best distance |
 |---|---|---|
-|  |  |  |
+| When does dropping a course start showing as a W on my transcript? | Yes | 0.213 |
+| How much printing money does each student get per semester? | Yes | 0.319 |
+| How many hours a week outside class does CS 210 take? | Yes | 0.300 |
+| What time does Halden Hall close? | Yes | 0.323 |
+| How much does a wash cost in Fenwick Court laundry? | Yes | 0.149 |
+| What is the capital of Mongolia? | No | 0.825 |
+| How do I change the oil in a diesel engine? | No | 0.934 |
+| Who won the 1994 World Cup? | No | 0.886 |
+| What is the recommended dosage of ibuprofen for a headache? | No | 0.844 |
+| How do I write a for loop in Rust? | No | 0.891 |
 
 ## How I Used AI
 
