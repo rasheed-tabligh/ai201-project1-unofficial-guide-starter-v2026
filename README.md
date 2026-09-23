@@ -29,18 +29,28 @@
 
 ## Chunking Strategy
 
-**Chunk size:**
-**Overlap:**
+**Chunk size:** 400 characters (the ceiling used when merging paragraphs)
+**Overlap:** none — chunks break on paragraph boundaries, so neighbouring
+chunks share no text
 
-<!-- What about YOUR documents made you pick these numbers? Short posts and
-     long sectioned guides don't want the same chunking, and "800 seemed
-     reasonable" earns nothing. Point at something you noticed when you read
-     the documents in Milestone 1.
+The starter's fixed 800-character window never split anything in this corpus.
+campus_life is 88 documents averaging 317 characters, so indexing produced 88
+chunks from 88 documents — one whole post per chunk. That is not always the
+right call. A file like housing_innisfree_hall.txt holds a building
+description, a laundry line and a noise line in one post, and a question about
+noise pulled all of it back with most of the text irrelevant.
 
-     If you changed your mind partway through, say so and say why. That's worth
-     more than pretending you got it right first time.
+So the strategy changed from cutting by length to cutting on structure.
+split_documents splits each document on blank lines, then merges consecutive
+paragraphs while the combined text stays under 400 characters, and folds
+anything still under 100 characters into the chunk before it so single-line
+paragraphs do not become fragments. The 400 ceiling comes from the corpus
+itself — the longest document is 549 characters and the average is 317, so a
+larger ceiling would merge posts back into one chunk and defeat the split.
 
-     Milestone 3. -->
+The result is 99 chunks from 88 documents, averaging 281 characters, shortest
+101 and longest 419. The shortest chunk rose from 178 to 101 only because
+multi-topic posts now come apart, and no chunk is a fragment.
 
 ## Sample Chunks
 
@@ -53,29 +63,52 @@
 
      Milestone 3. -->
 
-**Chunk 1** — source: `` — produced by: ``
+**Chunk 1** — source: `admin_add_drop_deadline.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+On the add/drop deadline
+
+You can add a course through the end of the second week. Dropping is a longer window — through the end of week six — but a drop after week two shows as a W on your transcript. Nothing anywhere on the registrar's site says this plainly, and students find out from each other.
 ```
 
-**Chunk 2** — source: `` — produced by: ``
+**Chunk 2** — source: `course_biol_160_workload.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+Workload for BIOL 160 Cell Biology
+
+People keep asking so: 9 to 11 hours a week, the heaviest first-year course by reputation. That's real time, not optimistic time.
+
+It's front-loaded — the first month is heavier than the rest, partly because you're learning the format.
 ```
 
-**Chunk 3** — source: `` — produced by: ``
+**Chunk 3** — source: `course_hist_118_workload.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+Workload for HIST 118 Modern World History
+
+People keep asking so: a lot of reading, about 120 pages a week, but no problem sets. That's real time, not optimistic time.
+
+It's front-loaded — the first month is heavier than the rest, partly because you're learning the format.
 ```
 
-**Chunk 4** — source: `` — produced by: ``
+**Chunk 4** — source: `dining_the_atrium.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+The Atrium
+
+Transferred in last year, so take this with a grain of salt. Wait times: no queue, it's all grab-and-go refrigerated cases. The thing worth going for is genuinely good sandwiches restocked twice a day. The thing to know is that picked clean by 1:15 and not restocked again until the next morning.
 ```
 
-**Chunk 5** — source: `` — produced by: ``
+**Chunk 5** — source: `housing_innisfree_hall.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+Innisfree Hall — what it's actually like
+
+Transferred in last year, so take this with a grain of salt. Built 1991, renovated 2022. Rooms are doubles arranged as pairs sharing one bathroom between two rooms.
+
+The good: the shared-bathroom-between-two-rooms arrangement is the best compromise on campus.
+
+The bad: no air conditioning, which matters for the first three weeks of September.
 ```
 
 ## Sample Answer
