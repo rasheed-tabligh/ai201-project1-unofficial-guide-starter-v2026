@@ -55,43 +55,28 @@ in at least 4 of 5 tries.
 
 ---
 
-## 4. Something about your chunks
+## 4. Chunks stand on their own
 
-<!-- YOU WRITE THIS ONE.
+At least 7 of 8 sampled chunks can answer a question on their own, without
+needing the text before or after them.
 
-     How would you know if your chunks were the right size? Name something
-     countable or observable.
-
-     Examples of the right shape — don't copy these, they should come from
-     what you actually saw in Milestone 3:
-       - "At least 4 of 5 sampled chunks read as a complete thought, with no
-          sentence cut in half at either end."
-       - "No chunk is shorter than 200 characters, since anything below that
-          in my corpus turned out to be a heading with no content under it." -->
-
-
-
-**Why this target:**
-
-
+**Why this target:** Indexing produced 88 chunks from 88 documents with nothing
+split, so each chunk is one whole post and most should stand alone. The
+shortest is 178 characters, and a post that short may not carry enough context
+by itself, which is why one of the eight is allowed to fail.
 
 ---
 
-## 5. Your choice
+## 5. Answers stay inside the retrieved chunks
 
-<!-- YOU WRITE THIS ONE TOO.
+For at least 4 of my 5 test questions, the answer contains no claim that is
+absent from the chunks that were retrieved for it.
 
-     Pick something you actually care about getting right. It could be about
-     speed, about refusals, about a particular kind of question your corpus
-     handles badly, about source attribution being correct rather than merely
-     present — anything, as long as it names a number or an observable
-     outcome. -->
-
-
-
-**Why this target:**
-
-
+**Why this target:** The model writes the answers and does not behave
+identically every time, so allowing one slip out of five is honest rather than
+soft. A claim here means a specific fact — a price, a time, a number or a rule,
+such as $30 or 7:00pm or 8 to 10 hours. General phrasing does not count as a
+claim.
 
 ---
 
