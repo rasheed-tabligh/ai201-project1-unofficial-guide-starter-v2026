@@ -22,6 +22,7 @@ to it, write down what you saw, and move on. That's a real observation about
 your pipeline, not giving up.
 """
 
+import re
 from dataclasses import dataclass
 
 import config
@@ -82,22 +83,54 @@ def fallback_split(
 
 def split_documents(documents: list[Document]) -> list[Chunk]:
     """
-    Split documents into chunks. ⚠️ REPLACE THE BODY OF THIS IN MILESTONE 3.
+    Split documents on paragraph breaks, then merge the short paragraphs.
 
-    Right now it just calls the fallback. That is the plain, generic behaviour
-    the brief is talking about.
+    Each document is cut on blank lines. Consecutive paragraphs are joined
+    while the combined text stays under 400 characters, so a run of one-line
+    paragraphs becomes one chunk instead of several fragments. Anything still
+    under 100 characters is folded into the chunk before it, on the grounds
+    that a paragraph that short rarely carries enough context to answer a
+    question on its own.
 
-    When you write your own strategy, set `produced_by` to
-    "chunker.py::split_documents" so your README's Sample Chunks section names
-    the right function. `app.py chunks` prints that string for you.
-
-    Things worth thinking about before you write any code:
-      - Are your documents short posts or long guides?
-      - Is the useful information in one sentence, or spread over a paragraph?
-      - Would splitting on paragraph breaks keep more thoughts intact than
-        splitting on a character count?
+    Whitespace is stripped and empty results are dropped. `index` counts from
+    0 within each source document, and every chunk is stamped
+    "chunker.py::split_documents".
     """
-    return fallback_split(documents)
+    max_chars = 400
+    min_chars = 100
+
+    chunks: list[Chunk] = []
+    for doc in documents:
+        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", doc.text)]
+        paragraphs = [p for p in paragraphs if p]
+
+        # Group paragraphs while they still fit under max_chars.
+        grouped: list[str] = []
+        for para in paragraphs:
+            if grouped and len(grouped[-1]) + 2 + len(para) < max_chars:
+                grouped[-1] = f"{grouped[-1]}\n\n{para}"
+            else:
+                grouped.append(para)
+
+        # A group that is still too short belongs with the one before it.
+        merged: list[str] = []
+        for group in grouped:
+            if merged and len(group) < min_chars:
+                merged[-1] = f"{merged[-1]}\n\n{group}"
+            else:
+                merged.append(group)
+
+        for index, text in enumerate(merged):
+            chunks.append(
+                Chunk(
+                    text=text,
+                    source=doc.source,
+                    index=index,
+                    produced_by="chunker.py::split_documents",
+                )
+            )
+
+    return chunks
 
 
 def describe(chunks: list[Chunk]) -> str:
