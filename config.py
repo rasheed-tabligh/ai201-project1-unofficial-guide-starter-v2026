@@ -24,8 +24,13 @@ CORPUS = os.getenv("AI201_CORPUS", "campus_life")
 
 
 # ─── Chunking (Milestone 3) ──────────────────────────────────────────────────
-# These are deliberately plain, generic numbers. Milestone 3 is where you
-# replace them with numbers that fit the documents you actually read.
+# Two chunkers, two pairs of numbers. PARAGRAPH_* belong to split_documents,
+# the paragraph chunker this project actually indexes with. CHUNK_SIZE and
+# CHUNK_OVERLAP belong to fallback_split, the starter's fixed-window chunker,
+# kept for comparison.
+
+PARAGRAPH_MAX_CHARS = 400   # merge ceiling used by split_documents
+PARAGRAPH_MIN_CHARS = 100   # floor; anything shorter folds into the chunk before it
 
 CHUNK_SIZE = 800        # characters per chunk
 CHUNK_OVERLAP = 120     # characters shared between neighbouring chunks

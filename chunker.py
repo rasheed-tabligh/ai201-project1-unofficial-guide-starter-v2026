@@ -81,7 +81,11 @@ def fallback_split(
     return chunks
 
 
-def split_documents(documents: list[Document]) -> list[Chunk]:
+def split_documents(
+    documents: list[Document],
+    max_chars: int | None = None,
+    min_chars: int | None = None,
+) -> list[Chunk]:
     """
     Split documents on paragraph breaks, then merge the short paragraphs.
 
@@ -96,8 +100,8 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
     0 within each source document, and every chunk is stamped
     "chunker.py::split_documents".
     """
-    max_chars = 400
-    min_chars = 100
+    max_chars = max_chars or config.PARAGRAPH_MAX_CHARS
+    min_chars = min_chars or config.PARAGRAPH_MIN_CHARS
 
     chunks: list[Chunk] = []
     for doc in documents:
@@ -112,7 +116,11 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
             else:
                 grouped.append(para)
 
-        # A group that is still too short belongs with the one before it.
+        # A group that is still too short belongs with the one before it. A
+        # document whose FIRST paragraph is shorter than the floor has no
+        # previous chunk to fold into, so it is emitted short. That does not
+        # happen in campus_life, where the shortest chunk is 101 characters,
+        # but it would on a corpus that opens with short headers.
         merged: list[str] = []
         for group in grouped:
             if merged and len(group) < min_chars:

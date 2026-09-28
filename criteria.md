@@ -22,9 +22,12 @@ pipeline earns credit; *"80% seemed reasonable"* does not.
 For at least 4 of my 5 test questions, the retrieved chunks include one that
 contains the answer.
 
-**Why this target:**
-<!-- e.g. "One of my questions is about a topic only two documents mention, so
-     I expect that one to be hard." -->
+**Why this target:** I expected four of five rather than all five because of
+how this corpus is shaped. Seven different buildings have laundry posts that are
+nearly identical — same sentence about eight washers and six dryers, differing
+only in the prices — so the Fenwick Court question was the one I expected
+retrieval to get wrong by returning the right kind of document from the wrong
+building.
 
 ---
 
@@ -32,9 +35,12 @@ contains the answer.
 
 Every answer the system produces names at least one source document.
 
-**Why this target:**
-<!-- Why all five and not four? What about your setup makes that achievable —
-     or what would have to go wrong for it not to be? -->
+**Why this target:** All five rather than four, because naming the source is not
+left to chance. GROUNDING_INSTRUCTION in generate.py is sent as a system
+instruction on every call and tells the model to name the document the answer
+came from, and build_prompt labels each retrieved chunk with its filename. For
+this to come out below 5 of 5, something in the pipeline would have to be broken
+rather than merely imperfect.
 
 ---
 
@@ -49,9 +55,12 @@ in at least 4 of 5 tries.
      what happened into your run log. Swap them for your own if you'd rather —
      just keep five of them, or the "4 of 5" above has nothing to be 4 of. -->
 
-**Why this target:**
-<!-- What did your distances look like when you set the cutoff in Milestone 4?
-     Was there a clean gap, or did the two groups overlap? -->
+**Why this target:** I ran all five of my in-corpus questions and all five
+OUT_OF_SCOPE questions through app.py retrieve and recorded the best distance
+for each. The two groups did not overlap: in-corpus landed between 0.149 and
+0.323, out-of-corpus between 0.825 and 0.934. With a gap that wide and nothing
+sitting inside it, a correctly placed cutoff should refuse all five — so four of
+five leaves room for one surprise without setting a target I cannot miss.
 
 ---
 
