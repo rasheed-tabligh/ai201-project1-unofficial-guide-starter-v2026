@@ -51,6 +51,16 @@ def load_scorer():
     return judge if callable(judge) else None
 
 
+def load_retrieval_scorer():
+    """Use scorer.judge_retrieval if it exists. Otherwise leave that column blank."""
+    try:
+        import scorer  # noqa: PLC0415
+    except ImportError:
+        return None
+    judge_retrieval = getattr(scorer, "judge_retrieval", None)
+    return judge_retrieval if callable(judge_retrieval) else None
+
+
 def run_once(question: str, top_k, threshold, corpus, variant):
     """One question, one run. Returns the answer and what retrieval gave us."""
     from store import search
@@ -96,6 +106,8 @@ def main():
         print("No scorer.py found — running unscored. Verdict column will be blank.")
         print("You'll build scorer.py in class in unit 2.\n")
 
+    judge_retrieval = load_retrieval_scorer()
+
     if args.runs < 3:
         print(f"⚠️  {args.runs} run(s). The submission asks for three.\n")
 
@@ -108,12 +120,18 @@ def main():
         print(f"\n{question}")
 
         run_results = []
+        chunk_hit = None
         for run in range(1, args.runs + 1):
             answer, results, decision = run_once(
                 question, top_k, threshold, corpus, args.variant
             )
             passed = judge(question, expects, answer, results) if judge else None
             run_results.append(passed)
+
+            # Once, off the first run's results. Retrieval is deterministic, so
+            # later runs would only repeat the same value.
+            if run == 1 and judge_retrieval:
+                chunk_hit = judge_retrieval(question, expects, results)
 
             mark = {True: "pass", False: "fail", None: "—"}[passed]
             print(f"  run {run}: {mark}  (best distance {decision.best_distance:.3f})")
@@ -129,7 +147,14 @@ def main():
                 }
             )
 
-        rows.append({"question": question, "expects": expects, "runs": run_results})
+        rows.append(
+            {
+                "question": question,
+                "expects": expects,
+                "runs": run_results,
+                "chunk_hit": chunk_hit,
+            }
+        )
 
     gate_rows = check_out_of_scope(top_k, threshold, corpus, args.variant)
 
@@ -200,16 +225,26 @@ def write_report(rows, transcript, gate_rows, args, corpus, top_k, threshold, sc
         "one row per CRITERION, so aggregate these into it — criterion 1 is how many",
         "of your questions had the answer in the retrieved chunks, and so on.",
         "",
-        f"| Question | {run_headers} |",
-        f"|---|{run_divider}|",
+        f"| Question | {run_headers} | Chunk had it |",
+        f"|---|{run_divider}|---|",
     ]
 
     for row in rows:
         cells = []
         for passed in row["runs"]:
             cells.append({True: "pass", False: "fail", None: " "}[passed])
+        chunk = {True: "yes", False: "no", None: " "}[row.get("chunk_hit")]
         question = row["question"].replace("|", "\\|")
-        lines.append(f"| {question} | {' | '.join(cells)} |")
+        lines.append(f"| {question} | {' | '.join(cells)} | {chunk} |")
+
+    lines += [
+        "",
+        "The Chunk had it column is measured once, not once per run: retrieval is",
+        "deterministic, so the same question returns the same chunks every time and",
+        "three columns would only repeat one value. It is the evidence for",
+        "criterion 1 — did retrieval hand the model the fact. The Run columns are",
+        "the evidence for the generate stage — did the model use it.",
+    ]
 
     if not scored:
         lines += [

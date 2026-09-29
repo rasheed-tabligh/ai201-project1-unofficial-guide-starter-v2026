@@ -186,6 +186,18 @@ previous chunk, so it gets emitted short anyway. That doesn't happen on
 campus_life — my shortest chunk is 101 — but it would on a corpus that opens
 with short headers. I left it, knowing the limitation.
 
+**3.** I had Claude Code review `scorer.py`. It raised four problems: an answer
+of "7:00 PM" would fail against my `expects` of "7:00pm" because of the space; an
+empty retrieval would still pass if the answer happened to contain the fact; a
+refusal was never checked for explicitly; and `judge_retrieval` didn't compare
+text the same way `judge` did. Two of those can't happen through the actual
+pipeline. `gate.check` refuses when there are no results, so the model never
+answers from an empty retrieval, and the refusal sentence doesn't contain any of
+my `expects` phrases. The one that mattered wasn't on its list of false passes at
+all. It was the inconsistency between the two functions: neither normalized whitespace, so the same fact spaced differently in a chunk and in an answer would have read as absent from the chunks but present in the answer. I put both on
+the same `normalize()`, which strips case, markdown and whitespace. The cost is
+that a match can now run across word boundaries.
+
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never
      claims earns nothing.
