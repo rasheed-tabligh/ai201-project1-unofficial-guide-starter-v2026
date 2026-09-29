@@ -198,6 +198,19 @@ all. It was the inconsistency between the two functions: neither normalized whit
 the same `normalize()`, which strips case, markdown and whitespace. The cost is
 that a match can now run across word boundaries.
 
+**4.** After implementing BM25 hybrid retrieval I pasted the before and after
+retrieval rankings for two questions into Claude and asked whether the change
+had helped. It had not, and I would probably have recorded it as a success
+from the run log alone, because all five criteria came out MET both times.
+What the comparison showed was that my second Fenwick document had moved down
+from rank 3 to rank 4 and that admin_printing_quota.txt had entered the top 5
+at distance 0.7491, neither of which any of my criteria could see. That is
+also where the gate risk came from: the Mongolia question's best distance
+moving from 0.825 to 0.852 because hybrid pushed the closest chunk out of the
+returned five. Honestly stated, I used Claude Code to write most of the code
+changes in this unit and to draft these README sections from facts and
+verdicts I supplied. The five criteria and all five verdicts are my own.
+
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never
      claims earns nothing.
