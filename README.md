@@ -213,46 +213,79 @@ that a match can now run across word boundaries.
 
 ## Run Log — Before
 
-<!-- Your five criteria, three runs each. `python run_eval.py --label before`
-     runs the questions, puts the OUT_OF_SCOPE ones through the gate, and
-     writes it all into results/ for you. Targets come from criteria.md; the
-     verdict column is your call.
-
-     Criterion 3 is measured in one deterministic pass rather than three, so
-     the same number goes in all three run columns. That's correct, not lazy.
-
-     Milestone 1. -->
+Source: `results/run_2026-09-28_2232_before.md`, produced by
+`run_eval.py::main`. Corpus campus_life, top-k 5, cutoff 0.55, 3 runs per
+question, caching off.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Chunks stand on their own | 7 of 8 | 7/8 | n/a | n/a | MET |
+| 5. Answers stay inside the retrieved chunks | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
 
-<!-- Underneath, paste the REAL output for each criterion from one of your
-     runs — the actual text your system produced, not a description of it.
-     Name the file and function that produced it. -->
+Criteria 1 and 3 are measured once, not three times, because retrieval is
+deterministic and the gate is a comparison against a fixed number; the same
+value goes in all three columns. Criterion 4 is a one-off sample of 8 chunks,
+not a per-run measurement, which is why runs 2 and 3 are n/a. Criterion 1
+comes from `scorer.py::judge_retrieval`, which checks the retrieved chunks.
+Criteria 2 and 5 were read by hand off the 15 answers in the log. For
+criterion 5, all 15 answers were checked for prices, times and numbers not
+present in the chunks they were given, and none were found.
+
+**Real output, verbatim from the before log.** The five-question table:
+
+| Question | Run 1 | Run 2 | Run 3 | Chunk had it |
+|---|---|---|---|---|
+| When does dropping a course start showing as a W on my transcript? | pass | pass | pass | yes |
+| How much printing money does each student get per semester? | pass | pass | pass | yes |
+| How many hours a week outside class does CS 210 take? | pass | pass | pass | yes |
+| What time does Halden Hall close? | pass | pass | pass | yes |
+| How much does a wash cost in Fenwick Court laundry? | pass | pass | pass | yes |
+
+The gate on out-of-corpus questions, produced by
+`run_eval.py::check_out_of_scope`, cutoff 0.55. Refused 5 of 5:
+
+| Out-of-scope question | Best distance | Gate |
+|---|---|---|
+| What is the capital of Mongolia? | 0.825 | refused |
+| How do I change the oil in a diesel engine? | 0.934 | refused |
+| Who won the 1994 World Cup? | 0.886 | refused |
+| What is the recommended dosage of ibuprofen for a headache? | 0.844 | refused |
+| How do I write a for loop in Rust? | 0.891 | refused |
+
+Two of the answers as produced.
+
+**When does dropping a course start showing as a W on my transcript? (run 1)**
+
+- Best distance: 0.2129 (passed the gate)
+- Sources retrieved: admin_add_drop_deadline.txt, admin_grade_appeals.txt, admin_pass_fail_option.txt, admin_transcript_requests.txt, admin_withdrawal_deadline.txt
+
+```
+Dropping a course starts showing as a W on your transcript after week two. 
+
+Source: admin_add_drop_deadline.txt
+```
+
+**How much does a wash cost in Fenwick Court laundry? (run 1)**
+
+- Best distance: 0.1487 (passed the gate)
+- Sources retrieved: housing_fenwick_court.txt, housing_fenwick_court_laundry.txt, housing_innisfree_hall.txt, housing_old_brewhouse.txt, housing_old_brewhouse_laundry.txt
+
+```
+A wash costs $2.00 in Fenwick Court laundry (housing_fenwick_court_laundry.txt and housing_fenwick_court.txt).
+```
 
 ## Verdicts
 
-<!-- MET or MISSED for each of the five, against the target you wrote last
-     unit — not a new one. Plus a sentence on how you decided. That sentence
-     matters most where it was close.
-
-     If your target said 4 of 5 and your runs came out 4, 3, 4, that's a MISS.
-     The target has to hold, not show up occasionally.
-
-     Milestone 2. -->
-
 | # | Criterion | Verdict | How I decided |
 |---|---|---|---|
-| 1 |  |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
-| 4 |  |  |  |
-| 5 |  |  |  |
+| 1 | Retrieved chunk contains the answer | MET | `judge_retrieval` found the expects phrase in a retrieved chunk for all five questions. |
+| 2 | Every answer names a source | MET | All 15 answers name at least one .txt source; the wording varies between "Source: x" and parentheses, but the criterion asks that a source is named, not that it is formatted consistently, so the variation is not a failure. |
+| 3 | Gate stops out-of-corpus questions | MET | The gate refused all five OUT_OF_SCOPE questions, and nothing sits near the 0.55 cutoff: in-corpus best distances ran 0.149 to 0.323, out-of-corpus 0.825 to 0.934. |
+| 4 | Chunks stand on their own | MET | Exactly 7 of 8, the target to the chunk; the full reasoning is in the note below. |
+| 5 | Answers stay inside the retrieved chunks | MET | No answer stated a price, time or number absent from its chunks. |
 
 **Criterion 4: MET.** The sample was 8 chunks from `python app.py chunks -n 8`,
 produced by `chunker.py::split_documents`. The command takes a fixed step
@@ -273,64 +306,94 @@ The one piece of advice: the essay rubric is posted in week 2 and it's followed 
 
 ## Diagnoses
 
-<!-- For each miss: which stage caused it, and how. The stage alone isn't
-     enough — you need the mechanism.
-
-     Not a diagnosis: "Question 3 didn't work."
-     A diagnosis:     "Question 3 asks about laundry costs. The answer is in
-                       one sentence that got split across two chunks, so
-                       neither chunk on its own contains it."
-
-     The five stages: loading → chunking → embedding → retrieval → generation.
-
-     Look for a pattern. If three misses all ask about numbers, that's one
-     problem, not three.
-
-     Missed nothing? Say so, then say honestly whether your targets were set
-     low, and which one you'd tighten and to what.
-
-     Milestone 3. -->
+Nothing was missed, so there is no failure to trace to a stage. What that
+means is worth saying plainly: a clean sweep on the first test points at safe
+targets rather than an excellent system. What I'd Do Differently, at the end
+of this file, names criterion 1 as the soft one and gives the version I would
+write instead.
 
 ## The Improvement
 
-**What I changed:**
+**What I changed:** BM25 hybrid retrieval. config.py gained `HYBRID = True`,
+`HYBRID_POOL = 20` and `RRF_K = 60`. `store.py::search` now pulls 20 chunks
+semantically, scores that pool with BM25Okapi, and fuses the two rankings with
+reciprocal rank fusion, returning the top 5 by fused score. Every Result keeps
+its real Chroma distance, so gate.py is untouched, and `HYBRID = False`
+reproduces the old behaviour exactly.
 
-**Why I picked it:**
-
-<!-- Connect it to a specific diagnosis above in one sentence. If you can't,
-     you picked a fix because it sounded impressive. -->
+**Why I picked it:** My diagnosis was that retrieval finds the right document
+and then fills the remaining slots with near-duplicate neighbours from other
+buildings, dining halls and courses; only 1 or 2 of the 5 retrieved chunks were
+on-subject on every question. BM25 matches the literal building name, which
+semantic search glides past.
 
 ### Run Log — After
 
-<!-- Same format, same five criteria, three runs each.
-     `python run_eval.py --label after` -->
+Source: `results/run_2026-09-28_2356_after.md`. Same table shape as the before
+log, and every row is identical: all five criteria MET, 5/5 or 7/8 as before.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Chunks stand on their own | 7 of 8 | 7/8 | n/a | n/a | MET |
+| 5. Answers stay inside the retrieved chunks | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+The after run had to be repeated once. The first attempt crashed on the
+fifteenth model call with a 429 from the Gemini free tier, which caps at 15
+requests per minute, and run_eval.py writes its report only at the end, so
+nothing was saved. The committed log is a clean single run.
+
+Since no criterion could see the change, I took a secondary measurement:
+on-subject chunks in the top 5.
+
+| Question | Before | After |
+|---|---|---|
+| Fenwick laundry | 2 of 5 | 2 of 5 |
+| Halden Hall | 2 of 5 | 2 of 5 |
 
 **Did it help?**
 
-<!-- Say plainly whether it did, and how you know. If it made things worse,
-     say that — a change that backfired, honestly reported, earns full credit
-     and is more interesting than one that worked. What matters is that you can
-     tell.
+No. On the Fenwick question, before, by rank: housing_fenwick_court_laundry,
+housing_old_brewhouse, housing_fenwick_court, housing_innisfree_hall,
+housing_old_brewhouse_laundry. After, by rank: housing_fenwick_court_laundry,
+housing_innisfree_hall, housing_old_brewhouse, housing_fenwick_court,
+admin_printing_quota. So the second Fenwick document moved down from rank 3 to
+rank 4, and admin_printing_quota.txt at distance 0.7491, a chunk about $30 of
+printing, entered the top 5 where it had not been before. On Halden,
+housing_innisfree_hall_noise.txt replaced a dining hall document.
 
-     Milestone 4. -->
+Why it failed: the pool is 20 of 99 chunks and the queries are short, so
+common words like "cost" and "hall" match broadly. RRF weights both rankings
+equally, so a chunk semantic search ranked 15th or 18th can reach the top 5 on
+weak keyword overlap alone.
+
+One thing did hold: the model did not take the bait. With the printing quota
+chunk in the Fenwick top 5, all three answers still said only $2.00 and cited
+only housing_fenwick_court_laundry.txt.
 
 ## What's Still Broken
 
-<!-- For each criterion still missed after your fix: what you'd do about it,
-     and why you stopped where you did.
+**1.** No criterion measures retrieval precision. All five came out MET while
+three of five retrieved chunks are off-subject. The criterion 1 rewrite in
+What I'd Do Differently addresses this, but I have not tested against it.
 
-     "I ran out of time" is fine if it's true. Pretending nothing is left is
-     not.
+**2.** Hybrid introduced a new risk. It can push the semantically closest
+chunk out of the returned five, which changes what the gate sees. The
+evidence: the Mongolia out-of-scope question's best distance moved from 0.825
+before to 0.852 after. Harmless there, because it made the refusal easier, but
+the same mechanism could raise an in-corpus question's best distance above the
+0.55 cutoff and cause a wrong refusal.
 
-     Milestone 5. -->
+**3.** What I would try next: shrink HYBRID_POOL from 20 to around 10, or
+weight the semantic ranking above the BM25 ranking in the fusion, so a chunk
+semantic search ranks poorly cannot reach the top 5 on keyword overlap alone.
+Not attempted, out of time for this unit.
+
+**4.** Criterion 4's failing chunk. course_hist_118.txt#1 still cannot name
+its course. The fix would be carrying the document title into every chunk from
+that document, which changes chunking, and this unit allows one change only.
 
 ## What I'd Do Differently
 
