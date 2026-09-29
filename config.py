@@ -40,6 +40,10 @@ CHUNK_OVERLAP = 120     # characters shared between neighbouring chunks
 
 TOP_K = 5               # how many chunks to pull back per question
 
+HYBRID = True           # BM25 reranking on top of semantic search
+HYBRID_POOL = 20        # how many chunks to pull semantically before reranking
+RRF_K = 60              # reciprocal rank fusion constant
+
 # The relevance gate. If the best chunk is further away than this, the system
 # refuses to answer instead of handing the model thin material.
 #

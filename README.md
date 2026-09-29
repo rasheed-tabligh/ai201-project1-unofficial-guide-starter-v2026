@@ -254,6 +254,23 @@ that a match can now run across word boundaries.
 | 4 |  |  |  |
 | 5 |  |  |  |
 
+**Criterion 4: MET.** The sample was 8 chunks from `python app.py chunks -n 8`,
+produced by `chunker.py::split_documents`. The command takes a fixed step
+through the chunk list rather than a random draw, so the sample is
+reproducible. The target was that at least 7 of the 8 chunks could answer a
+question on their own, and the result was 7 of 8. The seven that passed all
+open by naming their subject. The one failure is chunk 4,
+`course_hist_118.txt#1`, which carries a fact but never names the course, so an
+answer citing it could not say which course it applied to; the `#1` suffix
+means the paragraph chunker split that document and the course name stayed in
+`#0`. Worth saying plainly: 7 of 8 is exactly the target, so this verdict
+turned on one chunk, and a more generous reading of "can answer a question on
+their own" would have made it 8 of 8.
+
+```
+The one piece of advice: the essay rubric is posted in week 2 and it's followed exactly — read it early.
+```
+
 ## Diagnoses
 
 <!-- For each miss: which stage caused it, and how. The stage alone isn't
@@ -317,7 +334,22 @@ that a match can now run across word boundaries.
 
 ## What I'd Do Differently
 
-<!-- Knowing what you know now — which of your five criteria would you write
-     differently, and why?
+All five criteria came out MET on the first test, and that says at least one
+target was set safe rather than the system being excellent. The soft one is
+criterion 1. The target was 4 of 5 questions having the answer in the
+retrieved chunks, and it came out 5 of 5. It is soft because it only asks
+whether some retrieved chunk contains the fact, not whether the right document
+did. On the Fenwick laundry question only 2 of the 5 retrieved chunks are
+Fenwick documents, and one of the other three, housing_old_brewhouse.txt, says
+"$1.50 wash", so the criterion passes anyway. The same pattern holds on all
+five questions: 1 or 2 of the 5 retrieved chunks are on-subject, and the rest
+are near-duplicate neighbours from other buildings, dining halls or courses.
+In unit 1 I predicted the Fenwick question would fail retrieval because of the
+near-identical laundry posts. It passed, but the prediction was half right:
+the wrong-building chunks do come back, the model just picked correctly.
 
-     Milestone 5. -->
+The version I would write next time: "For at least 4 of 5 questions, the
+closest chunk comes from a document about the subject I asked about." That is
+harder because I know it holds for the Fenwick question, where rank 1 is
+housing_fenwick_court_laundry.txt, but I have not measured it for the other
+four, so it is a target I could miss.

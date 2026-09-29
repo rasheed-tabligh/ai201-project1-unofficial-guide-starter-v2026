@@ -18,6 +18,7 @@ rest of the project if they were wrong:
 """
 
 import os
+import re
 import shutil
 from dataclasses import dataclass
 
@@ -187,6 +188,17 @@ def search(
     """
     Retrieve the chunks closest in meaning to a question.
 
+    Two paths. With config.HYBRID off, this is plain semantic search: ask
+    Chroma for top_k and return them nearest-first. With it on, Chroma pulls
+    a larger pool (config.HYBRID_POOL), BM25 scores the question against the
+    pool's texts, and the semantic and BM25 rankings merge by reciprocal rank
+    fusion before the top_k come back, best fused score first.
+
+    BM25 reranks the semantic pool rather than retrieving from the corpus
+    separately so that every returned Result keeps the real Chroma distance
+    it came with — the gate reads those distances, and a chunk found only by
+    keyword match would have none.
+
     Returns them nearest-first, each with its distance.
     """
     top_k = top_k or config.TOP_K
@@ -199,9 +211,11 @@ def search(
             f"No index called '{name}'. Run `python app.py index` first."
         ) from exc
 
+    pool = config.HYBRID_POOL if config.HYBRID else top_k
+
     raw = collection.query(
         query_embeddings=embed([question]),
-        n_results=min(top_k, collection.count()),
+        n_results=min(pool, collection.count()),
     )
 
     results: list[Result] = []
@@ -217,7 +231,31 @@ def search(
                 produced_by=str(meta.get("produced_by", "unknown")),
             )
         )
-    return results
+
+    if not config.HYBRID or not results:
+        return results
+
+    from rank_bm25 import BM25Okapi
+
+    def tokenize(text: str) -> list[str]:
+        return [t for t in re.split(r"\W+", text.lower()) if t]
+
+    bm25 = BM25Okapi([tokenize(r.text) for r in results])
+    scores = bm25.get_scores(tokenize(question))
+
+    # Both rankings are 0-based: semantic rank is the pool position (Chroma
+    # returns nearest-first), BM25 rank is the position sorted by score, best
+    # first. Ties keep semantic order because Python's sort is stable.
+    bm25_rank = {
+        i: rank
+        for rank, i in enumerate(sorted(range(len(results)), key=lambda i: -scores[i]))
+    }
+    fused = {
+        i: 1 / (config.RRF_K + i) + 1 / (config.RRF_K + bm25_rank[i])
+        for i in range(len(results))
+    }
+    reranked = sorted(range(len(results)), key=lambda i: -fused[i])
+    return [results[i] for i in reranked[:top_k]]
 
 
 def index_exists(corpus: str | None = None, variant: str = "default") -> bool:
